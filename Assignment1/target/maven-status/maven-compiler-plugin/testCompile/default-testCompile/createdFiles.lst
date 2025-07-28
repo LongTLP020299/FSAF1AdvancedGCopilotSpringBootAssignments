@@ -1,0 +1,11 @@
+com\fsoft\ecommerce\entity\UserTest.class
+com\fsoft\ecommerce\service\impl\ReviewServiceImplTest.class
+com\fsoft\ecommerce\controller\DashboardControllerTest.class
+com\fsoft\ecommerce\service\impl\PurchaseVerificationServiceImplTest.class
+com\fsoft\ecommerce\service\impl\CategoryServiceImplTest.class
+com\fsoft\ecommerce\service\impl\OrderServiceImplTest.class
+com\fsoft\ecommerce\service\impl\DashboardServiceImplTest.class
+com\fsoft\ecommerce\service\impl\ProductServiceImplTest.class
+com\fsoft\ecommerce\entity\ProductTest.class
+com\fsoft\ecommerce\service\impl\ProductRatingServiceImplTest.class
+com\fsoft\ecommerce\service\impl\UserServiceImplTest.class

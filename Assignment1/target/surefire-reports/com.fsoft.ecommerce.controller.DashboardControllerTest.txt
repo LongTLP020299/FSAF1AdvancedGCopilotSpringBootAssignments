@@ -1,0 +1,4 @@
+-------------------------------------------------------------------------------
+Test set: com.fsoft.ecommerce.controller.DashboardControllerTest
+-------------------------------------------------------------------------------
+Tests run: 8, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 13.62 s -- in com.fsoft.ecommerce.controller.DashboardControllerTest

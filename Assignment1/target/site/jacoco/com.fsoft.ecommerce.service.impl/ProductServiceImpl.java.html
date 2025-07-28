@@ -1,0 +1,112 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>ProductServiceImpl.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">ecommerce-review-system</a> &gt; <a href="index.source.html" class="el_package">com.fsoft.ecommerce.service.impl</a> &gt; <span class="el_source">ProductServiceImpl.java</span></div><h1>ProductServiceImpl.java</h1><pre class="source lang-java linenums">package com.fsoft.ecommerce.service.impl;
+
+import com.fsoft.ecommerce.dto.ProductDTO;
+import com.fsoft.ecommerce.entity.Product;
+import com.fsoft.ecommerce.exception.ProductNotFoundException;
+import com.fsoft.ecommerce.repository.ProductRepository;
+import com.fsoft.ecommerce.service.ProductService;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.stereotype.Service;
+
+import java.time.LocalDateTime;
+import java.util.Optional;
+
+@Service
+<span class="fc" id="L17">public class ProductServiceImpl implements ProductService {</span>
+
+    @Autowired
+    private ProductRepository productRepository;
+
+    @Override
+    public Page&lt;ProductDTO&gt; getAllProducts(Pageable pageable) {
+<span class="fc" id="L24">        return productRepository.findAll(pageable)</span>
+<span class="fc" id="L25">                .map(this::toDTO);</span>
+    }
+
+    @Override
+    public Optional&lt;ProductDTO&gt; getProductById(Long id) {
+<span class="fc" id="L30">        return productRepository.findById(id)</span>
+<span class="fc" id="L31">                .map(this::toDTO);</span>
+    }
+
+    @Override
+    public ProductDTO createProduct(ProductDTO productDTO) {
+<span class="fc" id="L36">        Product product = toEntity(productDTO);</span>
+<span class="fc" id="L37">        product.setCreatedAt(LocalDateTime.now());</span>
+<span class="fc" id="L38">        product.setAverageRating(0.0);</span>
+<span class="fc" id="L39">        Product saved = productRepository.save(product);</span>
+<span class="fc" id="L40">        return toDTO(saved);</span>
+    }
+
+    @Override
+    public Optional&lt;ProductDTO&gt; updateProduct(Long id, ProductDTO productDTO) {
+<span class="fc" id="L45">        return productRepository.findById(id)</span>
+<span class="fc" id="L46">                .map(existingProduct -&gt; {</span>
+<span class="fc" id="L47">                    updateEntityFromDTO(existingProduct, productDTO);</span>
+<span class="fc" id="L48">                    Product updated = productRepository.save(existingProduct);</span>
+<span class="fc" id="L49">                    return toDTO(updated);</span>
+                });
+    }
+
+    @Override
+    public void deleteProduct(Long id) {
+<span class="fc" id="L55">        productRepository.deleteById(id);</span>
+<span class="fc" id="L56">    }</span>
+
+    @Override
+    public Page&lt;ProductDTO&gt; getProductsByCategory(String category, Pageable pageable) {
+<span class="fc" id="L60">        return productRepository.findByCategory(category, pageable)</span>
+<span class="fc" id="L61">                .map(this::toDTO);</span>
+    }
+
+    /**
+     * Finds a product by ID and returns the entity directly.
+     * Throws ProductNotFoundException if product is not found.
+     * 
+     * @param id the product ID
+     * @return the Product entity
+     * @throws ProductNotFoundException if product is not found
+     */
+    public Product findProductById(Long id) {
+<span class="nc" id="L73">        Optional&lt;Product&gt; productOpt = productRepository.findById(id);</span>
+<span class="nc" id="L74">        return productOpt.orElseThrow(() -&gt; </span>
+<span class="nc" id="L75">            new ProductNotFoundException(&quot;Product not found with id: &quot; + id));</span>
+    }
+
+    private ProductDTO toDTO(Product product) {
+<span class="fc" id="L79">        ProductDTO dto = new ProductDTO();</span>
+<span class="fc" id="L80">        dto.setId(product.getId());</span>
+<span class="fc" id="L81">        dto.setName(product.getName());</span>
+<span class="fc" id="L82">        dto.setDescription(product.getDescription());</span>
+<span class="fc" id="L83">        dto.setPrice(product.getPrice());</span>
+<span class="fc" id="L84">        dto.setStockQuantity(product.getStockQuantity());</span>
+<span class="fc" id="L85">        dto.setCategory(product.getCategory());</span>
+<span class="fc" id="L86">        dto.setImageUrl(product.getImageUrl());</span>
+<span class="fc" id="L87">        dto.setAverageRating(product.getAverageRating());</span>
+<span class="fc" id="L88">        dto.setCreatedAt(product.getCreatedAt());</span>
+<span class="fc" id="L89">        return dto;</span>
+    }
+
+    private Product toEntity(ProductDTO dto) {
+<span class="fc" id="L93">        Product product = new Product();</span>
+<span class="fc" id="L94">        product.setName(dto.getName());</span>
+<span class="fc" id="L95">        product.setDescription(dto.getDescription());</span>
+<span class="fc" id="L96">        product.setPrice(dto.getPrice());</span>
+<span class="fc" id="L97">        product.setStockQuantity(dto.getStockQuantity());</span>
+<span class="fc" id="L98">        product.setCategory(dto.getCategory());</span>
+<span class="fc" id="L99">        product.setImageUrl(dto.getImageUrl());</span>
+<span class="fc" id="L100">        return product;</span>
+    }
+
+    private void updateEntityFromDTO(Product product, ProductDTO dto) {
+<span class="pc bpc" id="L104" title="1 of 2 branches missed.">        if (dto.getName() != null) product.setName(dto.getName());</span>
+<span class="pc bpc" id="L105" title="1 of 2 branches missed.">        if (dto.getDescription() != null) product.setDescription(dto.getDescription());</span>
+<span class="fc bfc" id="L106" title="All 2 branches covered.">        if (dto.getPrice() != null) product.setPrice(dto.getPrice());</span>
+<span class="pc bpc" id="L107" title="1 of 2 branches missed.">        if (dto.getStockQuantity() != null) product.setStockQuantity(dto.getStockQuantity());</span>
+<span class="pc bpc" id="L108" title="1 of 2 branches missed.">        if (dto.getCategory() != null) product.setCategory(dto.getCategory());</span>
+<span class="pc bpc" id="L109" title="1 of 2 branches missed.">        if (dto.getImageUrl() != null) product.setImageUrl(dto.getImageUrl());</span>
+<span class="fc" id="L110">    }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.11.202310140853</span></div></body></html>

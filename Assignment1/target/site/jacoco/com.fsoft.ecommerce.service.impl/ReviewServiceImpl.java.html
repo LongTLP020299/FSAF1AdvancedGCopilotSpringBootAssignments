@@ -1,0 +1,98 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>ReviewServiceImpl.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">ecommerce-review-system</a> &gt; <a href="index.source.html" class="el_package">com.fsoft.ecommerce.service.impl</a> &gt; <span class="el_source">ReviewServiceImpl.java</span></div><h1>ReviewServiceImpl.java</h1><pre class="source lang-java linenums">package com.fsoft.ecommerce.service.impl;
+
+import com.fsoft.ecommerce.dto.ReviewDTO;
+import com.fsoft.ecommerce.entity.Product;
+import com.fsoft.ecommerce.entity.Review;
+import com.fsoft.ecommerce.entity.User;
+import com.fsoft.ecommerce.exception.DuplicateReviewException;
+import com.fsoft.ecommerce.exception.ProductNotFoundException;
+import com.fsoft.ecommerce.exception.UserNotFoundException;
+import com.fsoft.ecommerce.exception.UserNotPurchasedProductException;
+import com.fsoft.ecommerce.repository.ProductRepository;
+import com.fsoft.ecommerce.repository.ReviewRepository;
+import com.fsoft.ecommerce.repository.UserRepository;
+import com.fsoft.ecommerce.service.ProductRatingService;
+import com.fsoft.ecommerce.service.PurchaseVerificationService;
+import com.fsoft.ecommerce.service.ReviewService;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.util.List;
+
+@Service
+@Transactional
+<span class="fc" id="L25">public class ReviewServiceImpl implements ReviewService {</span>
+    
+    @Autowired
+    private ReviewRepository reviewRepository;
+    
+    @Autowired
+    private UserRepository userRepository;
+    
+    @Autowired
+    private ProductRepository productRepository;
+    
+    @Autowired
+    private PurchaseVerificationService purchaseVerificationService;
+    
+    @Autowired
+    private ProductRatingService productRatingService;
+    
+    @Override
+    public Review addReview(ReviewDTO reviewDTO, Long userId, Long productId) {
+        // Input validation
+<span class="fc bfc" id="L45" title="All 4 branches covered.">        if (reviewDTO.getRating() &lt; 1 || reviewDTO.getRating() &gt; 5) {</span>
+<span class="fc" id="L46">            throw new IllegalArgumentException(&quot;Rating must be between 1 and 5&quot;);</span>
+        }
+        
+        // 1. Verify user has purchased the product with delivered status (delegated to service)
+<span class="fc" id="L50">        boolean hasPurchased = purchaseVerificationService.hasUserPurchasedProduct(userId, productId);</span>
+        
+<span class="fc bfc" id="L52" title="All 2 branches covered.">        if (!hasPurchased) {</span>
+<span class="fc" id="L53">            throw new UserNotPurchasedProductException(</span>
+                &quot;User must purchase the product before reviewing it&quot;);
+        }
+        
+        // 2. Check if user already reviewed this product
+<span class="fc bfc" id="L58" title="All 2 branches covered.">        if (reviewRepository.existsByUserIdAndProductId(userId, productId)) {</span>
+<span class="fc" id="L59">            throw new DuplicateReviewException(</span>
+                &quot;User has already reviewed this product&quot;);
+        }
+        
+        // 3. Fetch user and product entities with consistent exception handling
+<span class="fc" id="L64">        User user = userRepository.findById(userId)</span>
+<span class="fc" id="L65">            .orElseThrow(() -&gt; new UserNotFoundException(&quot;User not found with id: &quot; + userId));</span>
+<span class="fc" id="L66">        Product product = productRepository.findById(productId)</span>
+<span class="fc" id="L67">            .orElseThrow(() -&gt; new ProductNotFoundException(&quot;Product not found with id: &quot; + productId));</span>
+        
+        // 4. Create and save review
+<span class="fc" id="L70">        Review review = new Review(user, product, reviewDTO.getRating(), reviewDTO.getComment());</span>
+<span class="fc" id="L71">        Review savedReview = reviewRepository.save(review);</span>
+        
+        // 5. Update product average rating (delegated to service)
+<span class="fc" id="L74">        productRatingService.updateProductAverageRating(productId);</span>
+        
+<span class="fc" id="L76">        return savedReview;</span>
+    }
+    
+    @Override
+    public List&lt;Review&gt; getReviewsByProduct(Long productId) {
+        // Validate product exists
+<span class="fc bfc" id="L82" title="All 2 branches covered.">        if (!productRepository.existsById(productId)) {</span>
+<span class="fc" id="L83">            throw new ProductNotFoundException(&quot;Product not found with id: &quot; + productId);</span>
+        }
+<span class="fc" id="L85">        return reviewRepository.findByProductIdOrderByCreatedAtDesc(productId);</span>
+    }
+    
+    @Override
+    public List&lt;Review&gt; getReviewsByUser(Long userId) {
+<span class="fc" id="L90">        return reviewRepository.findByUserId(userId);</span>
+    }
+    
+    @Override
+    public void updateProductAverageRating(Long productId) {
+<span class="fc" id="L95">        productRatingService.updateProductAverageRating(productId);</span>
+<span class="fc" id="L96">    }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.11.202310140853</span></div></body></html>

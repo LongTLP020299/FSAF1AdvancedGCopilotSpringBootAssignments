@@ -1,0 +1,96 @@
+-------------------------------------------------------------------------------
+Test set: com.fsoft.ecommerce.service.impl.OrderServiceImplTest
+-------------------------------------------------------------------------------
+Tests run: 29, Failures: 1, Errors: 7, Skipped: 0, Time elapsed: 0.425 s <<< FAILURE! -- in com.fsoft.ecommerce.service.impl.OrderServiceImplTest
+com.fsoft.ecommerce.service.impl.OrderServiceImplTest.deleteOrder_WithValidId_ShouldDeleteOrder -- Time elapsed: 0.035 s <<< FAILURE!
+Wanted but not invoked:
+orderRepository.findById(1L);
+-> at com.fsoft.ecommerce.service.impl.OrderServiceImplTest.deleteOrder_WithValidId_ShouldDeleteOrder(OrderServiceImplTest.java:469)
+
+However, there was exactly 1 interaction with this mock:
+orderRepository.deleteById(1L);
+-> at com.fsoft.ecommerce.service.impl.OrderServiceImpl.deleteOrder(OrderServiceImpl.java:74)
+
+
+	at com.fsoft.ecommerce.service.impl.OrderServiceImplTest.deleteOrder_WithValidId_ShouldDeleteOrder(OrderServiceImplTest.java:469)
+	at java.base/java.lang.reflect.Method.invoke(Method.java:578)
+	at java.base/java.util.ArrayList.forEach(ArrayList.java:1511)
+	at java.base/java.util.ArrayList.forEach(ArrayList.java:1511)
+
+com.fsoft.ecommerce.service.impl.OrderServiceImplTest.updateOrderStatus_ShouldUpdateStatus -- Time elapsed: 0.011 s <<< ERROR!
+java.lang.NullPointerException: Cannot invoke "com.fsoft.ecommerce.entity.User.getId()" because the return value of "com.fsoft.ecommerce.entity.Order.getUser()" is null
+	at com.fsoft.ecommerce.service.impl.OrderServiceImpl.toDTO(OrderServiceImpl.java:94)
+	at com.fsoft.ecommerce.service.impl.OrderServiceImpl.lambda$updateOrderStatus$2(OrderServiceImpl.java:145)
+	at java.base/java.util.Optional.map(Optional.java:260)
+	at com.fsoft.ecommerce.service.impl.OrderServiceImpl.updateOrderStatus(OrderServiceImpl.java:142)
+	at com.fsoft.ecommerce.service.impl.OrderServiceImplTest.updateOrderStatus_ShouldUpdateStatus(OrderServiceImplTest.java:512)
+	at java.base/java.lang.reflect.Method.invoke(Method.java:578)
+	at java.base/java.util.ArrayList.forEach(ArrayList.java:1511)
+	at java.base/java.util.ArrayList.forEach(ArrayList.java:1511)
+
+com.fsoft.ecommerce.service.impl.OrderServiceImplTest.confirmOrder_ShouldConfirmOrder -- Time elapsed: 0.009 s <<< ERROR!
+java.lang.NullPointerException: Cannot invoke "com.fsoft.ecommerce.entity.Order.getId()" because "order" is null
+	at com.fsoft.ecommerce.service.impl.OrderServiceImpl.toDTO(OrderServiceImpl.java:93)
+	at com.fsoft.ecommerce.service.impl.OrderServiceImpl.lambda$updateOrderStatus$2(OrderServiceImpl.java:145)
+	at java.base/java.util.Optional.map(Optional.java:260)
+	at com.fsoft.ecommerce.service.impl.OrderServiceImpl.updateOrderStatus(OrderServiceImpl.java:142)
+	at com.fsoft.ecommerce.service.impl.OrderServiceImpl.confirmOrder(OrderServiceImpl.java:153)
+	at com.fsoft.ecommerce.service.impl.OrderServiceImplTest.confirmOrder_ShouldConfirmOrder(OrderServiceImplTest.java:530)
+	at java.base/java.lang.reflect.Method.invoke(Method.java:578)
+	at java.base/java.util.ArrayList.forEach(ArrayList.java:1511)
+	at java.base/java.util.ArrayList.forEach(ArrayList.java:1511)
+
+com.fsoft.ecommerce.service.impl.OrderServiceImplTest.getOrderById_WithValidId_ShouldReturnOrder -- Time elapsed: 0.007 s <<< ERROR!
+java.lang.NullPointerException: Cannot invoke "com.fsoft.ecommerce.entity.User.getId()" because the return value of "com.fsoft.ecommerce.entity.Order.getUser()" is null
+	at com.fsoft.ecommerce.service.impl.OrderServiceImpl.toDTO(OrderServiceImpl.java:94)
+	at java.base/java.util.Optional.map(Optional.java:260)
+	at com.fsoft.ecommerce.service.impl.OrderServiceImpl.getOrderById(OrderServiceImpl.java:51)
+	at com.fsoft.ecommerce.service.impl.OrderServiceImplTest.getOrderById_WithValidId_ShouldReturnOrder(OrderServiceImplTest.java:378)
+	at java.base/java.lang.reflect.Method.invoke(Method.java:578)
+	at java.base/java.util.ArrayList.forEach(ArrayList.java:1511)
+	at java.base/java.util.ArrayList.forEach(ArrayList.java:1511)
+
+com.fsoft.ecommerce.service.impl.OrderServiceImplTest.createOrder_ShouldCreateAndReturnOrder -- Time elapsed: 0.006 s <<< ERROR!
+java.lang.NullPointerException: Cannot invoke "com.fsoft.ecommerce.entity.User.getId()" because the return value of "com.fsoft.ecommerce.entity.Order.getUser()" is null
+	at com.fsoft.ecommerce.service.impl.OrderServiceImpl.toDTO(OrderServiceImpl.java:94)
+	at com.fsoft.ecommerce.service.impl.OrderServiceImpl.createOrder(OrderServiceImpl.java:59)
+	at com.fsoft.ecommerce.service.impl.OrderServiceImplTest.createOrder_ShouldCreateAndReturnOrder(OrderServiceImplTest.java:411)
+	at java.base/java.lang.reflect.Method.invoke(Method.java:578)
+	at java.base/java.util.ArrayList.forEach(ArrayList.java:1511)
+	at java.base/java.util.ArrayList.forEach(ArrayList.java:1511)
+
+com.fsoft.ecommerce.service.impl.OrderServiceImplTest.updateOrder_WithValidData_ShouldUpdateOrder -- Time elapsed: 0.008 s <<< ERROR!
+java.lang.NullPointerException: Cannot invoke "com.fsoft.ecommerce.entity.User.getId()" because the return value of "com.fsoft.ecommerce.entity.Order.getUser()" is null
+	at com.fsoft.ecommerce.service.impl.OrderServiceImpl.toDTO(OrderServiceImpl.java:94)
+	at com.fsoft.ecommerce.service.impl.OrderServiceImpl.lambda$updateOrder$0(OrderServiceImpl.java:68)
+	at java.base/java.util.Optional.map(Optional.java:260)
+	at com.fsoft.ecommerce.service.impl.OrderServiceImpl.updateOrder(OrderServiceImpl.java:65)
+	at com.fsoft.ecommerce.service.impl.OrderServiceImplTest.updateOrder_WithValidData_ShouldUpdateOrder(OrderServiceImplTest.java:432)
+	at java.base/java.lang.reflect.Method.invoke(Method.java:578)
+	at java.base/java.util.ArrayList.forEach(ArrayList.java:1511)
+	at java.base/java.util.ArrayList.forEach(ArrayList.java:1511)
+
+com.fsoft.ecommerce.service.impl.OrderServiceImplTest.shipOrder_ShouldShipOrder -- Time elapsed: 0.007 s <<< ERROR!
+java.lang.NullPointerException: Cannot invoke "com.fsoft.ecommerce.entity.Order.getId()" because "order" is null
+	at com.fsoft.ecommerce.service.impl.OrderServiceImpl.toDTO(OrderServiceImpl.java:93)
+	at com.fsoft.ecommerce.service.impl.OrderServiceImpl.lambda$updateOrderStatus$2(OrderServiceImpl.java:145)
+	at java.base/java.util.Optional.map(Optional.java:260)
+	at com.fsoft.ecommerce.service.impl.OrderServiceImpl.updateOrderStatus(OrderServiceImpl.java:142)
+	at com.fsoft.ecommerce.service.impl.OrderServiceImpl.shipOrder(OrderServiceImpl.java:159)
+	at com.fsoft.ecommerce.service.impl.OrderServiceImplTest.shipOrder_ShouldShipOrder(OrderServiceImplTest.java:547)
+	at java.base/java.lang.reflect.Method.invoke(Method.java:578)
+	at java.base/java.util.ArrayList.forEach(ArrayList.java:1511)
+	at java.base/java.util.ArrayList.forEach(ArrayList.java:1511)
+
+com.fsoft.ecommerce.service.impl.OrderServiceImplTest.deliverOrder_ShouldDeliverOrder -- Time elapsed: 0.005 s <<< ERROR!
+java.lang.NullPointerException: Cannot invoke "com.fsoft.ecommerce.entity.Order.getId()" because "order" is null
+	at com.fsoft.ecommerce.service.impl.OrderServiceImpl.toDTO(OrderServiceImpl.java:93)
+	at com.fsoft.ecommerce.service.impl.OrderServiceImpl.lambda$updateOrderStatus$2(OrderServiceImpl.java:145)
+	at java.base/java.util.Optional.map(Optional.java:260)
+	at com.fsoft.ecommerce.service.impl.OrderServiceImpl.updateOrderStatus(OrderServiceImpl.java:142)
+	at com.fsoft.ecommerce.service.impl.OrderServiceImpl.deliverOrder(OrderServiceImpl.java:165)
+	at com.fsoft.ecommerce.service.impl.OrderServiceImplTest.deliverOrder_ShouldDeliverOrder(OrderServiceImplTest.java:564)
+	at java.base/java.lang.reflect.Method.invoke(Method.java:578)
+	at java.base/java.util.ArrayList.forEach(ArrayList.java:1511)
+	at java.base/java.util.ArrayList.forEach(ArrayList.java:1511)
+

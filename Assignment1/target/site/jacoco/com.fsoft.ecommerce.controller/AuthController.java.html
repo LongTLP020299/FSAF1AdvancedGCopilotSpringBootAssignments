@@ -1,0 +1,108 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>AuthController.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">ecommerce-review-system</a> &gt; <a href="index.source.html" class="el_package">com.fsoft.ecommerce.controller</a> &gt; <span class="el_source">AuthController.java</span></div><h1>AuthController.java</h1><pre class="source lang-java linenums">package com.fsoft.ecommerce.controller;
+
+import com.fsoft.ecommerce.dto.UserRegistrationDTO;
+import com.fsoft.ecommerce.entity.Role;
+import com.fsoft.ecommerce.entity.User;
+import com.fsoft.ecommerce.service.UserService;
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotBlank;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.validation.BindingResult;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.Optional;
+import java.util.stream.Collectors;
+
+@RestController
+@RequestMapping(&quot;/api/auth&quot;)
+<span class="fc" id="L21">public class AuthController {</span>
+
+    @Autowired
+    private UserService userService;
+
+    @Autowired
+    private PasswordEncoder passwordEncoder;
+
+    @PostMapping(&quot;/register&quot;)
+    public ResponseEntity&lt;String&gt; registerUser(@Valid @RequestBody UserRegistrationDTO registrationDTO, 
+                                              BindingResult bindingResult) {
+        try {
+            // Check for validation errors
+<span class="fc bfc" id="L34" title="All 2 branches covered.">            if (bindingResult.hasErrors()) {</span>
+<span class="fc" id="L35">                String errorMessages = bindingResult.getFieldErrors()</span>
+<span class="fc" id="L36">                    .stream()</span>
+<span class="fc" id="L37">                    .map(error -&gt; error.getField() + &quot;: &quot; + error.getDefaultMessage())</span>
+<span class="fc" id="L38">                    .collect(Collectors.joining(&quot;, &quot;));</span>
+<span class="fc" id="L39">                return ResponseEntity.badRequest()</span>
+<span class="fc" id="L40">                    .body(&quot;Validation errors: &quot; + errorMessages);</span>
+            }
+
+            // Check if username already exists
+<span class="fc bfc" id="L44" title="All 2 branches covered.">            if (userService.findByUsername(registrationDTO.getUsername()).isPresent()) {</span>
+<span class="fc" id="L45">                return ResponseEntity.badRequest()</span>
+<span class="fc" id="L46">                    .body(&quot;Error: Username is already taken!&quot;);</span>
+            }
+
+            // Check if email already exists
+<span class="fc bfc" id="L50" title="All 2 branches covered.">            if (userService.findByEmail(registrationDTO.getEmail()).isPresent()) {</span>
+<span class="fc" id="L51">                return ResponseEntity.badRequest()</span>
+<span class="fc" id="L52">                    .body(&quot;Error: Email is already in use!&quot;);</span>
+            }
+
+            // Create new user
+<span class="fc" id="L56">            User user = new User();</span>
+<span class="fc" id="L57">            user.setUsername(registrationDTO.getUsername());</span>
+<span class="fc" id="L58">            user.setEmail(registrationDTO.getEmail());</span>
+<span class="fc" id="L59">            user.setPassword(passwordEncoder.encode(registrationDTO.getPassword()));</span>
+<span class="fc" id="L60">            user.setFirstName(registrationDTO.getFirstName());</span>
+<span class="fc" id="L61">            user.setLastName(registrationDTO.getLastName());</span>
+<span class="fc" id="L62">            user.setRole(Role.USER); // Default role</span>
+
+<span class="fc" id="L64">            userService.createUser(user);</span>
+
+<span class="fc" id="L66">            return ResponseEntity.ok(&quot;User registered successfully!&quot;);</span>
+<span class="nc" id="L67">        } catch (Exception e) {</span>
+<span class="nc" id="L68">            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)</span>
+<span class="nc" id="L69">                .body(&quot;Error: Could not register user - &quot; + e.getMessage());</span>
+        }
+    }
+
+    @PostMapping(&quot;/login&quot;)
+    public ResponseEntity&lt;String&gt; authenticateUser(@Valid @RequestBody LoginRequest loginRequest) {
+        // Basic login - in production, implement JWT tokens
+        try {
+            // Validate credentials (implement proper authentication)
+<span class="nc" id="L78">            Optional&lt;User&gt; userOpt = userService.findByUsername(loginRequest.getUsername());</span>
+<span class="nc bnc" id="L79" title="All 2 branches missed.">            if (userOpt.isPresent()) {</span>
+<span class="nc" id="L80">                User user = userOpt.get();</span>
+<span class="nc bnc" id="L81" title="All 2 branches missed.">                if (passwordEncoder.matches(loginRequest.getPassword(), user.getPassword())) {</span>
+<span class="nc" id="L82">                    return ResponseEntity.ok(&quot;Login successful! User: &quot; + user.getUsername() + &quot; Role: &quot; + user.getRole());</span>
+                }
+            }
+<span class="nc" id="L85">            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)</span>
+<span class="nc" id="L86">                .body(&quot;Error: Invalid credentials!&quot;);</span>
+<span class="nc" id="L87">        } catch (Exception e) {</span>
+<span class="nc" id="L88">            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)</span>
+<span class="nc" id="L89">                .body(&quot;Error: Authentication failed - &quot; + e.getMessage());</span>
+        }
+    }
+
+    // Simple login request DTO
+<span class="nc" id="L94">    public static class LoginRequest {</span>
+        @NotBlank
+        private String username;
+        
+        @NotBlank
+        private String password;
+        
+        // Getters and setters
+<span class="nc" id="L102">        public String getUsername() { return username; }</span>
+<span class="nc" id="L103">        public void setUsername(String username) { this.username = username; }</span>
+<span class="nc" id="L104">        public String getPassword() { return password; }</span>
+<span class="nc" id="L105">        public void setPassword(String password) { this.password = password; }</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.11.202310140853</span></div></body></html>

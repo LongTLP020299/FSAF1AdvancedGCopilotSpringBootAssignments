@@ -1,0 +1,89 @@
+{
+	"version": "2.0.0",
+	"tasks": [
+		{
+			"label": "Build Spring Boot Project",
+			"type": "shell",
+			"command": "mvn",
+			"args": [
+				"clean",
+				"compile"
+			],
+			"group": "build",
+			"isBackground": false,
+			"problemMatcher": [],
+			"presentation": {
+				"echo": true,
+				"reveal": "always",
+				"focus": false,
+				"panel": "shared"
+			}
+		},
+		{
+			"label": "Run Spring Boot Application",
+			"type": "shell",
+			"command": "mvn",
+			"args": [
+				"spring-boot:run"
+			],
+			"group": "build",
+			"isBackground": true,
+			"problemMatcher": {
+				"pattern": [
+					{
+						"regexp": ".",
+						"file": 1,
+						"location": 2,
+						"message": 3
+					}
+				],
+				"background": {
+					"activeOnStart": true,
+					"beginsPattern": "^.*Tomcat started on port.*",
+					"endsPattern": "^.*Started EcommerceReviewSystemApplication.*"
+				}
+			},
+			"presentation": {
+				"echo": true,
+				"reveal": "always",
+				"focus": false,
+				"panel": "shared"
+			}
+		},
+		{
+			"label": "Run Tests",
+			"type": "shell",
+			"command": "mvn",
+			"args": [
+				"test"
+			],
+			"group": "test",
+			"isBackground": false,
+			"problemMatcher": [],
+			"presentation": {
+				"echo": true,
+				"reveal": "always",
+				"focus": false,
+				"panel": "shared"
+			}
+		},
+		{
+			"label": "Install Dependencies",
+			"type": "shell",
+			"command": "mvn",
+			"args": [
+				"clean",
+				"install"
+			],
+			"group": "build",
+			"isBackground": false,
+			"problemMatcher": [],
+			"presentation": {
+				"echo": true,
+				"reveal": "always",
+				"focus": false,
+				"panel": "shared"
+			}
+		}
+	]
+}

@@ -1,0 +1,507 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>OrderServiceImpl.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">ecommerce-review-system</a> &gt; <a href="index.source.html" class="el_package">com.fsoft.ecommerce.service.impl</a> &gt; <span class="el_source">OrderServiceImpl.java</span></div><h1>OrderServiceImpl.java</h1><pre class="source lang-java linenums">package com.fsoft.ecommerce.service.impl;
+
+import com.fsoft.ecommerce.dto.CreateOrderRequestDTO;
+import com.fsoft.ecommerce.dto.OrderDTO;
+import com.fsoft.ecommerce.entity.Order;
+import com.fsoft.ecommerce.entity.OrderItem;
+import com.fsoft.ecommerce.entity.OrderStatus;
+import com.fsoft.ecommerce.entity.Product;
+import com.fsoft.ecommerce.entity.User;
+import com.fsoft.ecommerce.exception.InsufficientStockException;
+import com.fsoft.ecommerce.exception.ProductNotFoundException;
+import com.fsoft.ecommerce.exception.UserNotFoundException;
+import com.fsoft.ecommerce.repository.OrderRepository;
+import com.fsoft.ecommerce.repository.ProductRepository;
+import com.fsoft.ecommerce.repository.UserRepository;
+import com.fsoft.ecommerce.service.OrderService;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.math.BigDecimal;
+import java.time.LocalDateTime;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Optional;
+import java.util.Set;
+
+@Service
+<span class="fc" id="L31">public class OrderServiceImpl implements OrderService {</span>
+
+    @Autowired
+    private OrderRepository orderRepository;
+    
+    @Autowired
+    private ProductRepository productRepository;
+    
+    @Autowired
+    private UserRepository userRepository;
+
+    @Override
+    public Page&lt;OrderDTO&gt; getAllOrders(Pageable pageable) {
+<span class="fc" id="L44">        return orderRepository.findAll(pageable)</span>
+<span class="fc" id="L45">                .map(this::toDTO);</span>
+    }
+
+    @Override
+    public Optional&lt;OrderDTO&gt; getOrderById(Long id) {
+<span class="fc" id="L50">        return orderRepository.findById(id)</span>
+<span class="fc" id="L51">                .map(this::toDTO);</span>
+    }
+
+    @Override
+    public OrderDTO createOrder(OrderDTO orderDTO) {
+<span class="fc" id="L56">        Order order = toEntity(orderDTO);</span>
+<span class="fc" id="L57">        order.setOrderDate(LocalDateTime.now());</span>
+<span class="fc" id="L58">        Order saved = orderRepository.save(order);</span>
+<span class="nc" id="L59">        return toDTO(saved);</span>
+    }
+
+    @Override
+    public Optional&lt;OrderDTO&gt; updateOrder(Long id, OrderDTO orderDTO) {
+<span class="pc" id="L64">        return orderRepository.findById(id)</span>
+<span class="nc" id="L65">                .map(existingOrder -&gt; {</span>
+<span class="fc" id="L66">                    updateEntityFromDTO(existingOrder, orderDTO);</span>
+<span class="fc" id="L67">                    Order updated = orderRepository.save(existingOrder);</span>
+<span class="nc" id="L68">                    return toDTO(updated);</span>
+                });
+    }
+
+    @Override
+    public void deleteOrder(Long id) {
+<span class="fc" id="L74">        orderRepository.deleteById(id);</span>
+<span class="fc" id="L75">    }</span>
+
+    @Override
+    public void cancelOrder(Long id) {
+<span class="fc" id="L79">        orderRepository.findById(id).ifPresent(order -&gt; {</span>
+<span class="fc" id="L80">            order.setStatus(com.fsoft.ecommerce.entity.OrderStatus.CANCELLED);</span>
+<span class="fc" id="L81">            orderRepository.save(order);</span>
+<span class="fc" id="L82">        });</span>
+<span class="fc" id="L83">    }</span>
+
+    @Override
+    public Page&lt;OrderDTO&gt; getOrdersByUserId(Long userId, Pageable pageable) {
+<span class="fc" id="L87">        return orderRepository.findByUserId(userId, pageable)</span>
+<span class="fc" id="L88">                .map(this::toDTO);</span>
+    }
+
+    private OrderDTO toDTO(Order order) {
+<span class="fc" id="L92">        OrderDTO dto = new OrderDTO();</span>
+<span class="fc" id="L93">        dto.setId(order.getId());</span>
+<span class="nc" id="L94">        dto.setUserId(order.getUser().getId());</span>
+<span class="nc" id="L95">        dto.setTotalAmount(order.getTotalAmount());</span>
+<span class="nc" id="L96">        dto.setStatus(order.getStatus().toString());</span>
+<span class="nc" id="L97">        dto.setOrderDate(order.getOrderDate());</span>
+<span class="nc" id="L98">        dto.setShippingAddress(order.getShippingAddress());</span>
+<span class="nc" id="L99">        return dto;</span>
+    }
+
+    private Order toEntity(OrderDTO dto) {
+<span class="fc" id="L103">        Order order = new Order();</span>
+        // Note: User will need to be set separately as we only have userId
+<span class="fc" id="L105">        order.setTotalAmount(dto.getTotalAmount());</span>
+<span class="pc bpc" id="L106" title="1 of 2 branches missed.">        if (dto.getStatus() != null) {</span>
+<span class="nc" id="L107">            order.setStatus(com.fsoft.ecommerce.entity.OrderStatus.valueOf(dto.getStatus()));</span>
+        }
+<span class="fc" id="L109">        order.setShippingAddress(dto.getShippingAddress());</span>
+<span class="fc" id="L110">        return order;</span>
+    }
+
+    private void updateEntityFromDTO(Order order, OrderDTO dto) {
+<span class="pc bpc" id="L114" title="1 of 2 branches missed.">        if (dto.getTotalAmount() != null) order.setTotalAmount(dto.getTotalAmount());</span>
+<span class="pc bpc" id="L115" title="1 of 2 branches missed.">        if (dto.getStatus() != null) order.setStatus(com.fsoft.ecommerce.entity.OrderStatus.valueOf(dto.getStatus()));</span>
+<span class="pc bpc" id="L116" title="1 of 2 branches missed.">        if (dto.getShippingAddress() != null) order.setShippingAddress(dto.getShippingAddress());</span>
+<span class="fc" id="L117">    }</span>
+
+
+
+    @Override
+    public boolean canPlaceOrder(Long productId, Integer quantity) {
+<span class="fc" id="L123">        Optional&lt;Product&gt; productOpt = productRepository.findById(productId);</span>
+<span class="fc bfc" id="L124" title="All 2 branches covered.">        if (productOpt.isEmpty()) {</span>
+<span class="fc" id="L125">            return false;</span>
+        }
+<span class="fc" id="L127">        Product product = productOpt.get();</span>
+<span class="fc bfc" id="L128" title="All 4 branches covered.">        return quantity &gt; 0 &amp;&amp; product.getStockQuantity() &gt;= quantity;</span>
+    }
+
+    @Override
+    public List&lt;OrderDTO&gt; getOrdersByStatus(OrderStatus status) {
+<span class="fc" id="L133">        return orderRepository.findByStatus(status).stream()</span>
+<span class="fc" id="L134">                .map(this::toDTO)</span>
+<span class="fc" id="L135">                .toList();</span>
+    }
+
+    @Override
+    @Transactional
+    public OrderDTO updateOrderStatus(Long orderId, OrderStatus newStatus) {
+<span class="pc" id="L141">        return orderRepository.findById(orderId)</span>
+<span class="nc" id="L142">                .map(order -&gt; {</span>
+<span class="fc" id="L143">                    order.setStatus(newStatus);</span>
+<span class="fc" id="L144">                    Order updated = orderRepository.save(order);</span>
+<span class="nc" id="L145">                    return toDTO(updated);</span>
+                })
+<span class="nc" id="L147">                .orElseThrow(() -&gt; new RuntimeException(&quot;Order not found with id: &quot; + orderId));</span>
+    }
+
+    @Override
+    @Transactional
+    public void confirmOrder(Long orderId) {
+<span class="nc" id="L153">        updateOrderStatus(orderId, OrderStatus.CONFIRMED);</span>
+<span class="nc" id="L154">    }</span>
+
+    @Override
+    @Transactional
+    public void shipOrder(Long orderId) {
+<span class="nc" id="L159">        updateOrderStatus(orderId, OrderStatus.SHIPPED);</span>
+<span class="nc" id="L160">    }</span>
+
+    @Override
+    @Transactional
+    public void deliverOrder(Long orderId) {
+<span class="nc" id="L165">        updateOrderStatus(orderId, OrderStatus.DELIVERED);</span>
+<span class="nc" id="L166">    }</span>
+    @Override
+    @Transactional
+    public Order placeOrder(CreateOrderRequestDTO request) {
+        // 1. Validate toàn bộ order request
+<span class="fc" id="L171">        OrderValidationContext validationContext = validateOrderRequest(request);</span>
+        
+        // 2. Reserve inventory với proper error handling
+<span class="fc" id="L174">        InventoryReservation reservation = reserveInventory(</span>
+<span class="fc" id="L175">            validationContext.getProduct(), </span>
+<span class="fc" id="L176">            request.getQuantity()</span>
+        );
+        
+        try {
+            // 3. Build complete order entity
+<span class="fc" id="L181">            Order order = buildOrder(request, validationContext);</span>
+            
+            // 4. Persist order và commit inventory
+<span class="fc" id="L184">            return finalizeOrderPlacement(order, reservation);</span>
+            
+<span class="fc" id="L186">        } catch (Exception e) {</span>
+            // 5. Rollback inventory reservation nếu có lỗi
+<span class="fc" id="L188">            rollbackInventoryReservation(reservation);</span>
+<span class="fc" id="L189">            throw e;</span>
+        }
+    }
+
+    /**
+     * Validates order request và returns validation context
+     * 
+     * @param request the order request to validate
+     * @return validation context containing validated entities
+     * @throws IllegalArgumentException if request parameters are invalid
+     * @throws UserNotFoundException if user is not found
+     * @throws ProductNotFoundException if product is not found
+     */
+    private OrderValidationContext validateOrderRequest(CreateOrderRequestDTO request) {
+        // Validate basic parameters
+<span class="fc" id="L204">        validateBasicOrderParameters(request);</span>
+        
+        // Retrieve và validate entities
+<span class="fc" id="L207">        User user = verifyUserExists(request.getUserId());</span>
+<span class="fc" id="L208">        Product product = retrieveAndValidateProduct(request.getProductId());</span>
+        
+<span class="fc" id="L210">        return new OrderValidationContext(user, product);</span>
+    }
+
+    /**
+     * Validates basic order parameters
+     * 
+     * @param request the order request to validate
+     * @throws IllegalArgumentException if any parameter is invalid
+     */
+    private void validateBasicOrderParameters(CreateOrderRequestDTO request) {
+<span class="fc bfc" id="L220" title="All 2 branches covered.">        if (request == null) {</span>
+<span class="fc" id="L221">            throw new IllegalArgumentException(&quot;Order request cannot be null&quot;);</span>
+        }
+<span class="fc bfc" id="L223" title="All 2 branches covered.">        if (request.getUserId() == null) {</span>
+<span class="fc" id="L224">            throw new IllegalArgumentException(&quot;User ID cannot be null&quot;);</span>
+        }
+<span class="fc bfc" id="L226" title="All 2 branches covered.">        if (request.getProductId() == null) {</span>
+<span class="fc" id="L227">            throw new IllegalArgumentException(&quot;Product ID cannot be null&quot;);</span>
+        }
+<span class="pc bpc" id="L229" title="1 of 4 branches missed.">        if (request.getQuantity() == null || request.getQuantity() &lt;= 0) {</span>
+<span class="fc" id="L230">            throw new IllegalArgumentException(&quot;Quantity must be greater than 0&quot;);</span>
+        }
+<span class="fc" id="L232">    }</span>
+
+    /**
+     * Retrieves và validates user existence
+     * 
+     * @param userId the user ID to retrieve
+     * @return the validated user entity
+     * @throws UserNotFoundException if user is not found
+     */
+    private User verifyUserExists(Long userId) {
+<span class="fc" id="L242">        return userRepository.findById(userId)</span>
+<span class="fc" id="L243">            .orElseThrow(() -&gt; new UserNotFoundException(&quot;User not found with id: &quot; + userId));</span>
+    }
+
+    /**
+     * Retrieves và validates product existence
+     * 
+     * @param productId the product ID to retrieve
+     * @return the validated product entity
+     * @throws ProductNotFoundException if product is not found
+     */
+    private Product retrieveAndValidateProduct(Long productId) {
+<span class="fc" id="L254">        return productRepository.findById(productId)</span>
+<span class="fc" id="L255">            .orElseThrow(() -&gt; new ProductNotFoundException(&quot;Product not found with id: &quot; + productId));</span>
+    }
+
+    /**
+     * Reserves inventory for order placement
+     * 
+     * @param product the product to reserve
+     * @param quantity the quantity to reserve
+     * @return inventory reservation details
+     * @throws InsufficientStockException if insufficient stock is available
+     */
+    private InventoryReservation reserveInventory(Product product, Integer quantity) {
+        // Validate stock availability
+<span class="fc" id="L268">        validateStockAvailability(product, quantity);</span>
+        
+        // Perform atomic stock reservation
+<span class="fc" id="L271">        Product updatedProduct = performStockReservation(product, quantity);</span>
+        
+<span class="fc" id="L273">        return new InventoryReservation(updatedProduct, quantity);</span>
+    }
+
+    /**
+     * Validates stock availability without side effects
+     * 
+     * @param product the product to check
+     * @param quantity the required quantity
+     * @throws InsufficientStockException if insufficient stock is available
+     */
+    private void validateStockAvailability(Product product, Integer quantity) {
+<span class="fc bfc" id="L284" title="All 2 branches covered.">        if (product.getStockQuantity() &lt; quantity) {</span>
+<span class="fc" id="L285">            throw new InsufficientStockException(</span>
+<span class="fc" id="L286">                String.format(&quot;Insufficient stock for product: %s. Available: %d, Requested: %d&quot;, </span>
+<span class="fc" id="L287">                    product.getName(), product.getStockQuantity(), quantity)</span>
+            );
+        }
+<span class="fc" id="L290">    }</span>
+
+    /**
+     * Performs atomic stock reservation
+     * 
+     * @param product the product to update
+     * @param quantity the quantity to reserve
+     * @return the updated product entity
+     */
+    private Product performStockReservation(Product product, Integer quantity) {
+<span class="fc" id="L300">        product.setStockQuantity(product.getStockQuantity() - quantity);</span>
+<span class="fc" id="L301">        return productRepository.save(product);</span>
+    }
+
+    /**
+     * Builds complete order entity với all relationships
+     * 
+     * @param request the order request
+     * @param context the validation context
+     * @return the complete order entity
+     */
+    private Order buildOrder(CreateOrderRequestDTO request, OrderValidationContext context) {
+        // Initialize order foundation
+<span class="fc" id="L313">        Order order = initializeOrderBase(request, context.getUser());</span>
+        
+        // Calculate financial details
+<span class="fc" id="L316">        BigDecimal totalAmount = calculateOrderTotal(context.getProduct(), request.getQuantity());</span>
+<span class="fc" id="L317">        order.setTotalAmount(totalAmount);</span>
+        
+        // Create và attach order items
+<span class="fc" id="L320">        Set&lt;OrderItem&gt; orderItems = createOrderItems(order, context.getProduct(), request.getQuantity());</span>
+<span class="fc" id="L321">        order.setOrderItems(orderItems);</span>
+        
+<span class="fc" id="L323">        return order;</span>
+    }
+
+    /**
+     * Initializes order với basic information
+     * 
+     * @param request the order request
+     * @param user the user placing the order
+     * @return the initialized order entity
+     */
+    private Order initializeOrderBase(CreateOrderRequestDTO request, User user) {
+<span class="fc" id="L334">        Order order = new Order();</span>
+<span class="fc" id="L335">        order.setUser(user);</span>
+<span class="fc" id="L336">        order.setStatus(OrderStatus.PENDING);</span>
+<span class="fc" id="L337">        order.setOrderDate(LocalDateTime.now());</span>
+<span class="fc" id="L338">        order.setShippingAddress(request.getShippingAddress());</span>
+<span class="fc" id="L339">        return order;</span>
+    }
+
+    /**
+     * Calculates total amount for order
+     * 
+     * @param product the product being ordered
+     * @param quantity the quantity ordered
+     * @return the calculated total amount
+     */
+    private BigDecimal calculateOrderTotal(Product product, Integer quantity) {
+<span class="fc" id="L350">        return product.getPrice().multiply(BigDecimal.valueOf(quantity));</span>
+    }
+
+    /**
+     * Creates order items for the order
+     * 
+     * @param order the parent order
+     * @param product the product being ordered
+     * @param quantity the quantity ordered
+     * @return set of order items
+     */
+    private Set&lt;OrderItem&gt; createOrderItems(Order order, Product product, Integer quantity) {
+<span class="fc" id="L362">        OrderItem orderItem = createSingleOrderItem(order, product, quantity);</span>
+        
+<span class="fc" id="L364">        Set&lt;OrderItem&gt; orderItems = new HashSet&lt;&gt;();</span>
+<span class="fc" id="L365">        orderItems.add(orderItem);</span>
+<span class="fc" id="L366">        return orderItems;</span>
+    }
+
+    /**
+     * Creates a single order item
+     * 
+     * @param order the parent order
+     * @param product the product
+     * @param quantity the quantity
+     * @return the created order item
+     */
+    private OrderItem createSingleOrderItem(Order order, Product product, Integer quantity) {
+<span class="fc" id="L378">        OrderItem orderItem = new OrderItem();</span>
+<span class="fc" id="L379">        orderItem.setOrder(order);</span>
+<span class="fc" id="L380">        orderItem.setProduct(product);</span>
+<span class="fc" id="L381">        orderItem.setQuantity(quantity);</span>
+<span class="fc" id="L382">        orderItem.setPrice(product.getPrice()); // Use actual product price instead of hardcoded value</span>
+<span class="fc" id="L383">        return orderItem;</span>
+    }
+
+    /**
+     * Finalizes order placement và commits inventory
+     * 
+     * @param order the order to finalize
+     * @param reservation the inventory reservation
+     * @return the persisted order entity
+     */
+    private Order finalizeOrderPlacement(Order order, InventoryReservation reservation) {
+        // Persist order
+<span class="fc" id="L395">        Order savedOrder = persistOrder(order);</span>
+        
+        // Mark inventory reservation as committed
+<span class="fc" id="L398">        commitInventoryReservation(reservation);</span>
+        
+<span class="fc" id="L400">        return savedOrder;</span>
+    }
+
+    /**
+     * Persists order entity
+     * 
+     * @param order the order to persist
+     * @return the persisted order entity
+     */
+    private Order persistOrder(Order order) {
+<span class="fc" id="L410">        return orderRepository.save(order);</span>
+    }
+
+    /**
+     * Commits inventory reservation
+     * 
+     * @param reservation the reservation to commit
+     */
+    private void commitInventoryReservation(InventoryReservation reservation) {
+        // In more complex systems, this would mark reservation as committed
+        // For now, stock has already been updated during reservation
+<span class="fc" id="L421">        logInventoryOperation(&quot;COMMITTED&quot;, reservation);</span>
+<span class="fc" id="L422">    }</span>
+
+    /**
+     * Rollbacks inventory reservation on failure
+     * 
+     * @param reservation the reservation to rollback
+     */
+    private void rollbackInventoryReservation(InventoryReservation reservation) {
+        try {
+<span class="fc" id="L431">            Product product = reservation.getProduct();</span>
+<span class="fc" id="L432">            restoreProductStock(product, reservation.getQuantity());</span>
+<span class="fc" id="L433">            logInventoryOperation(&quot;ROLLED_BACK&quot;, reservation);</span>
+<span class="nc" id="L434">        } catch (Exception e) {</span>
+            // Log error but don't throw to avoid masking original exception
+            // In production, use proper logging framework
+<span class="nc" id="L437">            System.err.println(&quot;Failed to rollback inventory reservation for product &quot; + </span>
+<span class="nc" id="L438">                reservation.getProduct().getId() + &quot;: &quot; + e.getMessage());</span>
+<span class="fc" id="L439">        }</span>
+<span class="fc" id="L440">    }</span>
+
+    /**
+     * Restores product stock
+     * 
+     * @param product the product to restore
+     * @param quantity the quantity to restore
+     */
+    private void restoreProductStock(Product product, Integer quantity) {
+<span class="fc" id="L449">        product.setStockQuantity(product.getStockQuantity() + quantity);</span>
+<span class="fc" id="L450">        productRepository.save(product);</span>
+<span class="fc" id="L451">    }</span>
+
+    /**
+     * Logs inventory operations for audit trail
+     * 
+     * @param operation the operation type
+     * @param reservation the reservation details
+     */
+    private void logInventoryOperation(String operation, InventoryReservation reservation) {
+        // TODO: Implement proper audit logging with logging framework
+<span class="fc" id="L461">        System.out.println(&quot;Inventory &quot; + operation + &quot; for product &quot; + </span>
+<span class="fc" id="L462">            reservation.getProduct().getId() + &quot; quantity &quot; + reservation.getQuantity());</span>
+<span class="fc" id="L463">    }</span>
+
+    /**
+     * Context object cho order validation results
+     */
+    private static class OrderValidationContext {
+        private final User user;
+        private final Product product;
+        
+<span class="fc" id="L472">        public OrderValidationContext(User user, Product product) {</span>
+<span class="fc" id="L473">            this.user = user;</span>
+<span class="fc" id="L474">            this.product = product;</span>
+<span class="fc" id="L475">        }</span>
+        
+        public User getUser() { 
+<span class="fc" id="L478">            return user; </span>
+        }
+        
+        public Product getProduct() { 
+<span class="fc" id="L482">            return product; </span>
+        }
+    }
+
+    /**
+     * Represents an inventory reservation
+     */
+    private static class InventoryReservation {
+        private final Product product;
+        private final Integer quantity;
+        
+<span class="fc" id="L493">        public InventoryReservation(Product product, Integer quantity) {</span>
+<span class="fc" id="L494">            this.product = product;</span>
+<span class="fc" id="L495">            this.quantity = quantity;</span>
+<span class="fc" id="L496">        }</span>
+        
+        public Product getProduct() { 
+<span class="fc" id="L499">            return product; </span>
+        }
+        
+        public Integer getQuantity() { 
+<span class="fc" id="L503">            return quantity; </span>
+        }
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.11.202310140853</span></div></body></html>

@@ -1,0 +1,185 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>OrderController.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">ecommerce-review-system</a> &gt; <a href="index.source.html" class="el_package">com.fsoft.ecommerce.controller</a> &gt; <span class="el_source">OrderController.java</span></div><h1>OrderController.java</h1><pre class="source lang-java linenums">package com.fsoft.ecommerce.controller;
+
+import com.fsoft.ecommerce.dto.CreateOrderRequestDTO;
+import com.fsoft.ecommerce.dto.OrderDTO;
+import com.fsoft.ecommerce.entity.Order;
+import com.fsoft.ecommerce.entity.OrderStatus;
+import com.fsoft.ecommerce.service.OrderService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import jakarta.validation.Valid;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Page;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+import org.springframework.http.HttpStatus;
+
+import java.util.List;
+
+@RestController
+@RequestMapping(&quot;/api/v1/orders&quot;)
+<span class="nc" id="L23">public class OrderController {</span>
+    @Autowired
+    private OrderService orderService;
+
+    @Operation(summary = &quot;Get all orders&quot;, description = &quot;Get paginated list of all orders&quot;)
+    @ApiResponses({
+        @ApiResponse(responseCode = &quot;200&quot;, description = &quot;List of orders returned successfully&quot;)
+    })
+    @GetMapping
+    public Page&lt;OrderDTO&gt; getAllOrders(Pageable pageable) {
+<span class="nc" id="L33">        return orderService.getAllOrders(pageable);</span>
+    }
+
+    @Operation(summary = &quot;Get order by ID&quot;, description = &quot;Get an order by its ID&quot;)
+    @ApiResponses({
+        @ApiResponse(responseCode = &quot;200&quot;, description = &quot;Order found&quot;),
+        @ApiResponse(responseCode = &quot;404&quot;, description = &quot;Order not found&quot;)
+    })
+    @GetMapping(&quot;/{id}&quot;)
+    public ResponseEntity&lt;OrderDTO&gt; getOrderById(@PathVariable Long id) {
+<span class="nc" id="L43">        return orderService.getOrderById(id)</span>
+<span class="nc" id="L44">                .map(ResponseEntity::ok)</span>
+<span class="nc" id="L45">                .orElse(ResponseEntity.notFound().build());</span>
+    }
+
+    @Operation(summary = &quot;Create order&quot;, description = &quot;Create a new order&quot;)
+    @ApiResponses({
+        @ApiResponse(responseCode = &quot;201&quot;, description = &quot;Order created successfully&quot;)
+    })
+    @PostMapping
+    @ResponseStatus(HttpStatus.CREATED)
+    public OrderDTO createOrder(@RequestBody OrderDTO dto) {
+<span class="nc" id="L55">        return orderService.createOrder(dto);</span>
+    }
+
+    @Operation(summary = &quot;Update order&quot;, description = &quot;Update an existing order by ID&quot;)
+    @ApiResponses({
+        @ApiResponse(responseCode = &quot;200&quot;, description = &quot;Order updated successfully&quot;),
+        @ApiResponse(responseCode = &quot;404&quot;, description = &quot;Order not found&quot;)
+    })
+    @PutMapping(&quot;/{id}&quot;)
+    public ResponseEntity&lt;OrderDTO&gt; updateOrder(@PathVariable Long id, @RequestBody OrderDTO dto) {
+<span class="nc" id="L65">        return orderService.updateOrder(id, dto)</span>
+<span class="nc" id="L66">                .map(ResponseEntity::ok)</span>
+<span class="nc" id="L67">                .orElse(ResponseEntity.notFound().build());</span>
+    }
+
+    @Operation(summary = &quot;Delete order&quot;, description = &quot;Delete an order by ID&quot;)
+    @ApiResponses({
+        @ApiResponse(responseCode = &quot;204&quot;, description = &quot;Order deleted successfully&quot;)
+    })
+    @DeleteMapping(&quot;/{id}&quot;)
+    public ResponseEntity&lt;Void&gt; deleteOrder(@PathVariable Long id) {
+<span class="nc" id="L76">        orderService.deleteOrder(id);</span>
+<span class="nc" id="L77">        return ResponseEntity.noContent().build();</span>
+    }
+
+    @Operation(summary = &quot;Cancel order&quot;, description = &quot;Cancel an order by ID&quot;)
+    @ApiResponses({
+        @ApiResponse(responseCode = &quot;200&quot;, description = &quot;Order cancelled successfully&quot;),
+        @ApiResponse(responseCode = &quot;404&quot;, description = &quot;Order not found&quot;)
+    })
+    @PostMapping(&quot;/{id}/cancel&quot;)
+    public ResponseEntity&lt;Void&gt; cancelOrder(@PathVariable Long id) {
+        try {
+<span class="nc" id="L88">            orderService.cancelOrder(id);</span>
+<span class="nc" id="L89">            return ResponseEntity.ok().build();</span>
+<span class="nc" id="L90">        } catch (RuntimeException ex) {</span>
+<span class="nc" id="L91">            return ResponseEntity.notFound().build();</span>
+        }
+    }
+
+    // New enhanced placeOrder endpoints
+    @Operation(summary = &quot;Place order&quot;, description = &quot;Place a new order with product and quantity&quot;)
+    @ApiResponses({
+        @ApiResponse(responseCode = &quot;201&quot;, description = &quot;Order placed successfully&quot;),
+        @ApiResponse(responseCode = &quot;400&quot;, description = &quot;Invalid request or insufficient stock&quot;),
+        @ApiResponse(responseCode = &quot;404&quot;, description = &quot;Product or user not found&quot;)
+    })
+    @PostMapping(&quot;/place&quot;)
+    @ResponseStatus(HttpStatus.CREATED)
+    public ResponseEntity&lt;Order&gt; placeOrder(@Valid @RequestBody CreateOrderRequestDTO request) {
+        try {
+<span class="nc" id="L106">            Order order = orderService.placeOrder(request);</span>
+<span class="nc" id="L107">            return ResponseEntity.status(HttpStatus.CREATED).body(order);</span>
+<span class="nc" id="L108">        } catch (Exception e) {</span>
+<span class="nc" id="L109">            return ResponseEntity.badRequest().build();</span>
+        }
+    }
+
+    @Operation(summary = &quot;Check if order can be placed&quot;, description = &quot;Check if an order can be placed for given product and quantity&quot;)
+    @ApiResponses({
+        @ApiResponse(responseCode = &quot;200&quot;, description = &quot;Check completed&quot;)
+    })
+    @GetMapping(&quot;/can-place&quot;)
+    public ResponseEntity&lt;Boolean&gt; canPlaceOrder(
+            @RequestParam Long productId, 
+            @RequestParam Integer quantity) {
+<span class="nc" id="L121">        boolean canPlace = orderService.canPlaceOrder(productId, quantity);</span>
+<span class="nc" id="L122">        return ResponseEntity.ok(canPlace);</span>
+    }
+
+    @Operation(summary = &quot;Get orders by status&quot;, description = &quot;Get all orders with specific status&quot;)
+    @ApiResponses({
+        @ApiResponse(responseCode = &quot;200&quot;, description = &quot;Orders returned successfully&quot;)
+    })
+    @GetMapping(&quot;/status/{status}&quot;)
+    public ResponseEntity&lt;List&lt;OrderDTO&gt;&gt; getOrdersByStatus(@PathVariable OrderStatus status) {
+<span class="nc" id="L131">        List&lt;OrderDTO&gt; orders = orderService.getOrdersByStatus(status);</span>
+<span class="nc" id="L132">        return ResponseEntity.ok(orders);</span>
+    }
+
+    @Operation(summary = &quot;Update order status&quot;, description = &quot;Update the status of an order&quot;)
+    @ApiResponses({
+        @ApiResponse(responseCode = &quot;200&quot;, description = &quot;Order status updated successfully&quot;),
+        @ApiResponse(responseCode = &quot;404&quot;, description = &quot;Order not found&quot;)
+    })
+    @PutMapping(&quot;/{id}/status&quot;)
+    public ResponseEntity&lt;OrderDTO&gt; updateOrderStatus(
+            @PathVariable Long id, 
+            @RequestParam OrderStatus status) {
+        try {
+<span class="nc" id="L145">            OrderDTO updatedOrder = orderService.updateOrderStatus(id, status);</span>
+<span class="nc" id="L146">            return ResponseEntity.ok(updatedOrder);</span>
+<span class="nc" id="L147">        } catch (Exception e) {</span>
+<span class="nc" id="L148">            return ResponseEntity.notFound().build();</span>
+        }
+    }
+
+    @Operation(summary = &quot;Confirm order&quot;, description = &quot;Confirm a pending order&quot;)
+    @PostMapping(&quot;/{id}/confirm&quot;)
+    public ResponseEntity&lt;Void&gt; confirmOrder(@PathVariable Long id) {
+        try {
+<span class="nc" id="L156">            orderService.confirmOrder(id);</span>
+<span class="nc" id="L157">            return ResponseEntity.ok().build();</span>
+<span class="nc" id="L158">        } catch (Exception e) {</span>
+<span class="nc" id="L159">            return ResponseEntity.notFound().build();</span>
+        }
+    }
+
+    @Operation(summary = &quot;Ship order&quot;, description = &quot;Mark order as shipped&quot;)
+    @PostMapping(&quot;/{id}/ship&quot;)
+    public ResponseEntity&lt;Void&gt; shipOrder(@PathVariable Long id) {
+        try {
+<span class="nc" id="L167">            orderService.shipOrder(id);</span>
+<span class="nc" id="L168">            return ResponseEntity.ok().build();</span>
+<span class="nc" id="L169">        } catch (Exception e) {</span>
+<span class="nc" id="L170">            return ResponseEntity.notFound().build();</span>
+        }
+    }
+
+    @Operation(summary = &quot;Deliver order&quot;, description = &quot;Mark order as delivered&quot;)
+    @PostMapping(&quot;/{id}/deliver&quot;)
+    public ResponseEntity&lt;Void&gt; deliverOrder(@PathVariable Long id) {
+        try {
+<span class="nc" id="L178">            orderService.deliverOrder(id);</span>
+<span class="nc" id="L179">            return ResponseEntity.ok().build();</span>
+<span class="nc" id="L180">        } catch (Exception e) {</span>
+<span class="nc" id="L181">            return ResponseEntity.notFound().build();</span>
+        }
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.11.202310140853</span></div></body></html>
